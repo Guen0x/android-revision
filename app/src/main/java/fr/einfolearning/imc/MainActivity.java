@@ -64,8 +64,12 @@ public class MainActivity extends Activity {
 		this.ed_poids = (EditText) findViewById(R.id.poids);
 		this.group = (RadioGroup) findViewById(R.id.group);
 		this.date_picker = (DatePicker) this.findViewById(R.id.date_picker);
+		this.ed_prenom = findViewById(R.id.prenom);
+		this.ed_taille = findViewById(R.id.taille);
+		this.tv_imc = findViewById(R.id.tv_imc);
 
-		// A compléter
+
+		// A compléter FAIT
 
 	}
 
@@ -79,7 +83,15 @@ public class MainActivity extends Activity {
 					public void onClick(View v) {
 
 						try {
+							String nom = ed_nom.getText().toString().trim();
+							String prenom = ed_prenom.getText().toString().trim();
+							String date = getDateFromDatePicker();
+							float poids = getAndConvertPoids();
+							float taille = getAndConvertTailleInCm();
 
+							FicheIMC fiche = new FicheIMC(nom, prenom, date, poids, taille);
+
+							startActivityCalculIMC(fiche);
 							// A compléter
 
 						}
@@ -108,19 +120,20 @@ public class MainActivity extends Activity {
 
 	// Converti le poids de la TextView en float
 	private float getAndConvertPoids() throws IncorrectDataException {
-
-
-		return 0.0f;
+		String sPoids = ed_poids.getText().toString().trim();
+		return convertStringToFloat(sPoids);
 	}
+
 
 	// Converti la taille de la TextView  en centimètres
 	// Tiens compte du choix des boutons radios.
 	private float getAndConvertTailleInCm() throws IncorrectDataException {
-
-	   // A compléter
-
-		return 0.0f;
-
+		String sTaille = ed_taille.getText().toString().trim();
+		float taille = convertStringToFloat(sTaille);
+		if (!checkIfTailleInCm()) {
+			taille *= 100.0f;
+		}
+		return taille;
 	}
 
 	/**
@@ -133,9 +146,13 @@ public class MainActivity extends Activity {
 
 	// Converti une chaine représentant un float en un nombre float
 	public float convertStringToFloat(String stringToConvert) throws IncorrectDataException {
-
-		return 0.0f;
+		try {
+			return Float.parseFloat(stringToConvert);
+		} catch (NumberFormatException e) {
+			throw new IncorrectDataException("Erreur de conversion float");
+		}
 	}
+
 
 
 
@@ -155,8 +172,9 @@ public String getDateFromDatePicker() {
 
     // Lance l'activité CalculIMC avec une ficheIMC dans les extras
 	private void startActivityCalculIMC(FicheIMC ficheIMC) {
-
-	  // A compléter
+		Intent intent = new Intent(MainActivity.this, CalculIMC.class);
+		intent.putExtra(FICHE_IMC, ficheIMC);
+		startActivityForResult(intent, REQ_IMC);
 	}
 
 
