@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name" translatable="false">Calcul d\'IMC</string>
+    <string name="app_name">Calcul d\'IMC</string>
     <string name="first_name">First Name :</string>
     <string name="last_name">Last name :</string>
 	<string name="mess_erreur_operation_non_permise">Opération not permitted !</string>
