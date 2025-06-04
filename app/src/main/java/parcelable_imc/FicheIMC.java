@@ -135,5 +135,8 @@ public class FicheIMC implements Parcelable {
     	return s;
 	}
 
+	public String getPrenom() {
+		return prenom;
+	}
 }
 

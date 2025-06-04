@@ -13,180 +13,117 @@ import android.widget.Toast;
 import fr.einfolearning.imc.exceptions.IncorrectDataException;
 import parcelable_imc.FicheIMC;
 
-/**
- * Saisie des informations de l'uitlisateur
- * Affichage de l'historique des informations et des IMCs calculés
- *
- * @author B. LEMAIRE
- * @version 2023
- */
 public class MainActivity extends Activity {
 
-	public static final String FICHE_IMC = "fiche_imc"; /* clef pour l'envoie de la fiche IMC en
-	                                                       tant qu'extra d'un intent */
+	public static final String FICHE_IMC = "fiche_imc";
+	private static final int REQ_IMC = 1;
 
-	private static final int REQ_IMC = 1;				/* Code de requête pour le résultat de
-														   retour d'une activité */
-
-	// Champs de saisis des informations
-	private	EditText ed_nom = null;
-	private	EditText ed_prenom = null;
-	private	EditText ed_poids = null;
-	private	EditText ed_taille = null;
-
-	// Permet de saisir la date de naissance
-	private	DatePicker date_picker = null;
-
-	// Groupe radio pour saisir l'unité de la taille (mètre ou centimètre)
-	private	RadioGroup group = null;
-
-
-	// Zone d'affichage de l'IMC
+	private EditText ed_nom, ed_prenom, ed_poids, ed_taille;
+	private DatePicker date_picker;
+	private RadioGroup group;
 	private TextView tv_imc;
 
-
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
+	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		// Désérialisation des ressources
-		this.deserialiserRessource();
-
-
-		// Mise en place des écouteurs
-		this.initConnections();
+		deserialiserRessource();
+		initConnections();
 	}
 
 	private void deserialiserRessource() {
-
-		this.ed_nom = (EditText) findViewById(R.id.nom);
-		this.ed_poids = (EditText) findViewById(R.id.poids);
-		this.group = (RadioGroup) findViewById(R.id.group);
-		this.date_picker = (DatePicker) this.findViewById(R.id.date_picker);
-		this.ed_prenom = findViewById(R.id.prenom);
-		this.ed_taille = findViewById(R.id.taille);
-		this.tv_imc = findViewById(R.id.tv_imc);
-
-
-		// A compléter FAIT
-
+		ed_nom = findViewById(R.id.nom);
+		ed_prenom = findViewById(R.id.prenom);
+		ed_poids = findViewById(R.id.poids);
+		ed_taille = findViewById(R.id.taille);
+		date_picker = findViewById(R.id.date_picker);
+		group = findViewById(R.id.group);
+		tv_imc = findViewById(R.id.tv_imc);
 	}
 
 	private void initConnections() {
+		findViewById(R.id.calcul).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				try {
+					String nom = ed_nom.getText().toString().trim();
+					String prenom = ed_prenom.getText().toString().trim();
+					String date = getDateFromDatePicker();
+					float poids = getAndConvertPoids();
+					float taille = getAndConvertTailleInCm();
 
-		// Ecouteur pour le bouton calculer
-		this.findViewById(R.id.calcul).setOnClickListener(
-				new View.OnClickListener() {
+					FicheIMC fiche = new FicheIMC(nom, prenom, date, poids, taille);
+					startActivityCalculIMC(fiche);
 
-					@Override
-					public void onClick(View v) {
+				} catch (IncorrectDataException e) {
+					Toast.makeText(MainActivity.this, R.string.input_problem, Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
 
-						try {
-							String nom = ed_nom.getText().toString().trim();
-							String prenom = ed_prenom.getText().toString().trim();
-							String date = getDateFromDatePicker();
-							float poids = getAndConvertPoids();
-							float taille = getAndConvertTailleInCm();
-
-							FicheIMC fiche = new FicheIMC(nom, prenom, date, poids, taille);
-
-							startActivityCalculIMC(fiche);
-							// A compléter
-
-						}
-						catch(IncorrectDataException e){
-							Toast.makeText(MainActivity.this, R.string.input_problem, Toast.LENGTH_SHORT).show();
-						}
-					}
-				});
-
-		// Listener du bouton de remise à zéro
-
+		// Bonus : bouton de remise à zéro
+		findViewById(R.id.reset).setOnClickListener(v -> {
+			ed_nom.setText("");
+			ed_prenom.setText("");
+			ed_poids.setText("");
+			ed_taille.setText("");
+			tv_imc.setText("");
+		});
 	}
 
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-
-		// A compléter
-	   super.onActivityResult(requestCode, resultCode, data);
-	}
-
-
-
-
-
-
-	// Converti le poids de la TextView en float
 	private float getAndConvertPoids() throws IncorrectDataException {
 		String sPoids = ed_poids.getText().toString().trim();
 		return convertStringToFloat(sPoids);
 	}
 
-
-	// Converti la taille de la TextView  en centimètres
-	// Tiens compte du choix des boutons radios.
 	private float getAndConvertTailleInCm() throws IncorrectDataException {
 		String sTaille = ed_taille.getText().toString().trim();
 		float taille = convertStringToFloat(sTaille);
 		if (!checkIfTailleInCm()) {
-			taille *= 100.0f;
+			taille *= 100; // convertit en cm SI c'était en mètres
 		}
 		return taille;
 	}
 
-	/**
-	 * Vérifie si le boutons radio cm est activé
-	 * @return (boolean) true : cm choisi, false sinon
-	 */
 	private boolean checkIfTailleInCm() {
 		return group.getCheckedRadioButtonId() == R.id.radio2;
 	}
 
-	// Converti une chaine représentant un float en un nombre float
 	public float convertStringToFloat(String stringToConvert) throws IncorrectDataException {
 		try {
 			return Float.parseFloat(stringToConvert);
 		} catch (NumberFormatException e) {
-			throw new IncorrectDataException("Erreur de conversion float");
+			throw new IncorrectDataException("Conversion échouée");
 		}
 	}
 
+	public String getDateFromDatePicker() {
+		int d = date_picker.getDayOfMonth();
+		int m = date_picker.getMonth() + 1;
+		int y = date_picker.getYear();
+		return d + "/" + m + "/" + y;
+	}
 
-
-
-	/** Retourn la date de naissance saisie dans le datepicker
-	 * sous la forme d'une chaine au formatdd/mm/yy
-	 * @return (String)
-	 */
-public String getDateFromDatePicker() {
-
-	int d = MainActivity.this.date_picker.getDayOfMonth();
-	int m = MainActivity.this.date_picker.getMonth() + 1;
-	int y = MainActivity.this.date_picker.getYear();
-
-	return d + "/" + m + "/" + y;
-}
-
-
-    // Lance l'activité CalculIMC avec une ficheIMC dans les extras
 	private void startActivityCalculIMC(FicheIMC ficheIMC) {
 		Intent intent = new Intent(MainActivity.this, CalculIMC.class);
 		intent.putExtra(FICHE_IMC, ficheIMC);
 		startActivityForResult(intent, REQ_IMC);
 	}
 
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		// Pour affichage éventuel du retour si nécessaire
+	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
-		super.onRestoreInstanceState(outState);
-}
-
+		super.onSaveInstanceState(outState);
+	}
 
 	@Override
-	protected void onRestoreInstanceState(Bundle saveInstanceState){
-		super.onRestoreInstanceState(saveInstanceState);
-
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+		super.onRestoreInstanceState(savedInstanceState);
 	}
 }
